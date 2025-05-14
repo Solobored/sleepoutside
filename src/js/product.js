@@ -1,25 +1,23 @@
-import { setLocalStorage, getLocalStorage, getParam } from "./utils.mjs";
-import ProductData from "./ProductData.mjs";
+function convertToJson(res) {
+  if (res.ok) {
+    return res.json();
+  } else {
+    throw new Error("Bad Response");
+  }
+}
 
-const dataSource = new ProductData('tents');
-const productId = getParam('product');
-
-dataSource.findProductById(productId)
-  .then(product => {
-    // Once we have the product data, update the HTML
-    document.querySelector('#productName').innerText = product.Brand.Name;
-    document.querySelector('#productNameWithoutBrand').innerText = product.NameWithoutBrand;
-    document.querySelector('#productImage').src = product.Image;
-    document.querySelector('#productImage').alt = product.Name;
-    document.querySelector('#productFinalPrice').innerText = product.FinalPrice;
-    document.querySelector('#productColorName').innerText = product.Colors[0].ColorName;
-    document.querySelector('#productDescriptionHtmlSimple').innerHTML = product.DescriptionHtmlSimple;
-    document.querySelector('#addToCart').setAttribute('data-id', product.Id);
-  });
-
-// Add to cart functionality
-document.querySelector('#addToCart').addEventListener('click', () => {
-  let cart = getLocalStorage('so-cart') || [];
-  cart.push(product);
-  setLocalStorage('so-cart', cart);
-});
+export default class ProductData {
+  constructor(category) {
+    this.category = category;
+    this.path = `../json/${this.category}.json`;
+  }
+  getData() {
+    return fetch(this.path)
+      .then(convertToJson)
+      .then((data) => data);
+  }
+  async findProductById(id) {
+    const products = await this.getData();
+    return products.find((item) => item.Id === id);
+  }
+}
