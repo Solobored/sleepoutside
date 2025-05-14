@@ -1,23 +1,20 @@
-function convertToJson(res) {
-  if (res.ok) {
-    return res.json();
-  } else {
-    throw new Error("Bad Response");
-  }
+import { getParam } from "./utils.mjs";
+import ProductData from "./ProductData.mjs";
+import ProductDetails from "./ProductDetails.mjs";
+
+const dataSource = new ProductData("tents");
+const productID = getParam("product");
+
+const product = new ProductDetails(productID, dataSource);
+product.init();
+
+// // add to cart button event handler
+async function addToCartHandler(e) {
+const product = await dataSource.findProductById(e.target.dataset.id);
+addProductToCart(product);
 }
 
-export default class ProductData {
-  constructor(category) {
-    this.category = category;
-    this.path = `../json/${this.category}.json`;
-  }
-  getData() {
-    return fetch(this.path)
-      .then(convertToJson)
-      .then((data) => data);
-  }
-  async findProductById(id) {
-    const products = await this.getData();
-    return products.find((item) => item.Id === id);
-  }
-}
+// // add listener to Add to Cart button
+document
+   .getElementById("addToCart")
+   .addEventListener("click", addToCartHandler);
