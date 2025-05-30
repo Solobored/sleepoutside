@@ -4,18 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sleep Outside | Cart</title>
-    <link rel="stylesheet" href="../css/style.css" />
-    <script src="../js/cart.js" type="module"></script>
+    <link rel="stylesheet" href="/css/style.css" />
+    <script src="/js/cart.js" type="module"></script>
   </head>
   <body>
     <header class="divider" id="main-header"></header>
     <main class="divider">
       <section class="products">
         <h2>My Cart</h2>
-        <ul class="product-list"></ul>
-        <div class="cart-footer hide">
-          <p class="cart-total">Total: </p>
-          <button class="checkout-button">Checkout</button>
+        <ul class="product-list">
+          <!-- cart items will be inserted here -->
+        </ul>
+        <div class="list-footer hide">
+          <div class="cart-total">$0.00</div>
+          <button class="checkout">Checkout</button>
+        </div>
+        <div class="empty-cart hide">
+          <p>Your cart is empty</p>
+          <a href="/index.html">Continue Shopping</a>
         </div>
       </section>
     </main>

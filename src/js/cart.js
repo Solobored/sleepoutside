@@ -1,138 +1,112 @@
-import { getLocalStorage, loadHeaderFooter } from "./utils.mjs"
+import { getLocalStorage, setLocalStorage, loadHeaderFooter, alertMessage, updateCartCount } from "./utils.mjs"
+import ShoppingCart from "./ShoppingCart.mjs"
 
-// Load header and footer only once
 loadHeaderFooter()
+
+const cart = new ShoppingCart("so-cart", ".product-list")
+cart.init()
 
 function renderCartContents() {
   const cartItems = getLocalStorage("so-cart") || []
-  const productList = document.querySelector(".product-list")
+  const productListElement = document.querySelector(".product-list")
+  const cartTotalElement = document.querySelector(".cart-total")
+  const listFooterElement = document.querySelector(".list-footer")
+  const emptyCartElement = document.querySelector(".empty-cart")
 
-  // Clear the product list first to prevent duplication
-  productList.innerHTML = ""
-
-  if (cartItems.length === 0) {
-    productList.innerHTML = '<div class="empty-cart">Your cart is empty</div>'
-    hideCartFooter()
+  if (!productListElement) {
+    console.error("Product list element not found")
     return
   }
 
-  // Calculate total price and render cart items
-  let totalPrice = 0
-  cartItems.forEach((item) => {
-    const cartItem = document.createElement("li")
-    cartItem.className = "cart-card divider"
-    cartItem.innerHTML = cartItemTemplate(item)
-    productList.appendChild(cartItem)
-    totalPrice += Number.parseFloat(item.FinalPrice)
-  })
+  if (cartItems.length === 0) {
+    productListElement.innerHTML = ""
+    if (listFooterElement) listFooterElement.classList.add("hide")
+    if (emptyCartElement) emptyCartElement.classList.remove("hide")
+    return
+  }
 
-  // Display cart total and checkout button
-  renderCartFooter(totalPrice)
+  // Show cart contents
+  if (emptyCartElement) emptyCartElement.classList.add("hide")
+  if (listFooterElement) listFooterElement.classList.remove("hide")
 
-  // Add event listeners to remove buttons
-  document.querySelectorAll(".cart-card__remove").forEach((button) => {
-    button.addEventListener("click", function () {
-      const itemId = this.getAttribute("data-id")
-      removeItemFromCart(itemId)
-    })
-  })
+  const htmlItems = cartItems.map((item) => cartItemTemplate(item))
+  productListElement.innerHTML = htmlItems.join("")
+
+  // Update cart total
+  const total = calculateCartTotal(cartItems)
+  if (cartTotalElement) {
+    cartTotalElement.textContent = `Total: $${total.toFixed(2)}`
+  }
+
+  // Add event listeners for remove buttons
+  addRemoveListeners()
+
+  // Update cart count in header
+  updateCartCount()
 }
 
 function cartItemTemplate(item) {
-  // Make sure we're using the correct image path
-  const imagePath = item.Images?.PrimaryMedium || item.Image
+  const quantity = item.quantity || 1
+  const newItem = `<li class="cart-card divider">
+  <a href="#" class="cart-card__image">
+    <img
+      src="${item.Images?.PrimaryMedium || item.Image || "/images/placeholder.svg"}"
+      alt="${item.Name}"
+    />
+  </a>
+  <a href="/product_pages/index.html?product=${item.Id}">
+    <h2 class="card__name">${item.Name}</h2>
+  </a>
+  <p class="cart-card__color">${item.Colors?.[0]?.ColorName || "N/A"}</p>
+  <p class="cart-card__quantity">qty: ${quantity}</p>
+  <p class="cart-card__price">$${item.FinalPrice}</p>
+  <button class="cart-card__remove" data-id="${item.Id}">❌</button>
+</li>`
 
-  return `
-    <a href="#" class="cart-card__image">
-      <img src="${imagePath}" alt="${item.Name}" />
-    </a>
-    <a href="#">
-      <h2 class="card__name">${item.Name}</h2>
-    </a>
-    <p class="cart-card__color">${item.Colors?.[0]?.ColorName || "N/A"}</p>
-    <p class="cart-card__quantity">qty: 1</p>
-    <p class="cart-card__price">$${item.FinalPrice}</p>
-    <button class="cart-card__remove" data-id="${item.Id}">X</button>
-  `
+  return newItem
 }
 
-function renderCartFooter(total) {
-  const footer = document.querySelector(".cart-footer") || createCartFooter()
-
-  footer.innerHTML = `
-    <div class="cart-total">
-      <p>Total: $${total.toFixed(2)}</p>
-    </div>
-    <button class="checkout-button">Checkout</button>
-  `
-
-  document.querySelector(".checkout-button").addEventListener("click", () => {
-    window.location.href = "../checkout/index.html"
+function addRemoveListeners() {
+  const removeButtons = document.querySelectorAll(".cart-card__remove")
+  removeButtons.forEach((button) => {
+    button.addEventListener("click", removeFromCart)
   })
-
-  // Show the footer
-  footer.classList.remove("hide")
 }
 
-function createCartFooter() {
-  const footer = document.createElement("div")
-  footer.classList.add("cart-footer")
-  document.querySelector(".products").appendChild(footer)
-  return footer
-}
-
-function hideCartFooter() {
-  const footer = document.querySelector(".cart-footer")
-  if (footer) {
-    footer.classList.add("hide")
-  }
-}
-
-function removeItemFromCart(itemId) {
+function removeFromCart(e) {
+  const id = e.target.dataset.id
   let cartItems = getLocalStorage("so-cart") || []
-  cartItems = cartItems.filter((item) => item.Id !== itemId)
-  localStorage.setItem("so-cart", JSON.stringify(cartItems))
+  const itemToRemove = cartItems.find((item) => item.Id === id)
+  cartItems = cartItems.filter((item) => item.Id !== id)
+  setLocalStorage("so-cart", cartItems)
   renderCartContents()
-  updateCartCount()
-
-  // Show notification
-  showNotification("Item removed from cart")
-}
-
-function updateCartCount() {
-  const cartItems = getLocalStorage("so-cart") || []
-  const countElement = document.querySelector(".cart-count")
-
-  if (countElement) {
-    if (cartItems.length > 0) {
-      countElement.textContent = cartItems.length
-      countElement.classList.remove("hide")
-    } else {
-      countElement.classList.add("hide")
-    }
+  if (itemToRemove) {
+    alertMessage(`${itemToRemove.Name} removed from cart`)
   }
 }
 
-function showNotification(message) {
-  // Create notification element if it doesn't exist
-  let notification = document.querySelector(".notification")
-  if (!notification) {
-    notification = document.createElement("div")
-    notification.className = "notification"
-    document.body.appendChild(notification)
-  }
-
-  notification.textContent = message
-  notification.classList.add("show")
-
-  // Hide notification after 3 seconds
-  setTimeout(() => {
-    notification.classList.remove("show")
-  }, 3000)
+function calculateCartTotal(items) {
+  return items.reduce((total, item) => {
+    const quantity = item.quantity || 1
+    return total + item.FinalPrice * quantity
+  }, 0)
 }
 
-// Initialize cart on page load
-document.addEventListener("DOMContentLoaded", () => {
-  renderCartContents()
-  updateCartCount()
-})
+function addCheckoutListener() {
+  const checkoutButton = document.querySelector(".checkout")
+  if (checkoutButton) {
+    checkoutButton.addEventListener("click", (e) => {
+      e.preventDefault()
+      const cartItems = getLocalStorage("so-cart") || []
+      if (cartItems.length === 0) {
+        alertMessage("Your cart is empty. Add some items before checking out.")
+        return
+      }
+      window.location.href = "/checkout/index.html"
+    })
+  }
+}
+
+// Initialize cart display
+renderCartContents()
+addCheckoutListener()
