@@ -123,15 +123,13 @@ export function removeAllAlerts() {
   });
 }
 
-
 export function updateCartCount() {
   const cartItems = getLocalStorage("so-cart") || [];
   const cartCount = cartItems.reduce((total, item) => total + (item.quantity || 1), 0);
-  
   const cartCountElement = document.querySelector(".cart-count");
   if (cartCountElement) {
     cartCountElement.textContent = cartCount > 0 ? cartCount : "";
-    cartCountElement.style.display = cartCount > 0 ? "flex" : "none"; // Changed to 'flex'
+    cartCountElement.style.display = cartCount > 0 ? "block" : "none";
   }
 }
 

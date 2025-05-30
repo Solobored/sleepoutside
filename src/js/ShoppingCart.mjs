@@ -30,11 +30,9 @@ export default class ShoppingCart {
     this.calculateListTotal(list);
     this.renderCartContents(list);
   }
-  // ShoppingCart.mjs
   calculateListTotal(list) {
-    this.total = list.reduce((sum, item) => {
-      return sum + (item.FinalPrice * (item.quantity || 1));
-    }, 0);
+    const amounts = list.map((item) => item.FinalPrice);
+    this.total = amounts.reduce((sum, item) => sum + item);
   }
   renderCartContents() {
     const cartItems = getLocalStorage(this.key);

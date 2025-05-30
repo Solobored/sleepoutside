@@ -1,6 +1,7 @@
-import { loadHeaderFooter, updateCartCount, updateWishlistCount } from "./utils.mjs";
+import { loadHeaderFooter, updateCartCount, updateWishlistCount } from "./utils.mjs"
 
 loadHeaderFooter().then(() => {
-  updateCartCount();
-  updateWishlistCount();
-});
+  // Update cart and wishlist counts after header is loaded
+  updateCartCount()
+  updateWishlistCount()
+})

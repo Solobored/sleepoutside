@@ -57,24 +57,29 @@ export default class ProductDetails {
       .addEventListener("click", this.addToWishlist.bind(this));
   }
   
-  // ProductDetails.mjs
-addToCart() {
-  let cartContents = getLocalStorage("so-cart");
-  if (!cartContents) cartContents = [];
-  
-  const existingItem = cartContents.find(item => item.Id === this.product.Id);
-  
-  if (existingItem) {
-    existingItem.quantity = (existingItem.quantity || 1) + 1;
-  } else {
-    this.product.quantity = 1;
-    cartContents.push(this.product);
+  addToCart() {
+    let cartContents = getLocalStorage("so-cart");
+    //check to see if there was anything there
+    if (!cartContents) {
+      cartContents = [];
+    }
+    
+    // Check if item already exists in cart
+    const existingItem = cartContents.find(item => item.Id === this.product.Id);
+    
+    if (existingItem) {
+      // Increase quantity
+      existingItem.quantity = (existingItem.quantity || 1) + 1;
+    } else {
+      // Add new item with quantity 1
+      this.product.quantity = 1;
+      cartContents.push(this.product);
+    }
+    
+    setLocalStorage("so-cart", cartContents);
+    alertMessage(`${this.product.NameWithoutBrand} added to cart!`);
+    updateCartCount();
   }
-  
-  setLocalStorage("so-cart", cartContents);
-  alertMessage(`${this.product.NameWithoutBrand} added to cart!`);
-  updateCartCount(); // Ensure this is called
-}
   
   addToWishlist() {
     addToWishlist(this.product);
